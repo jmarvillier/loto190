@@ -314,6 +314,7 @@ async function triggerInstall() {
       if (!raw) return;
       const s = JSON.parse(raw);
       state = {...state, ...s};
+		warmUpSpeech();
     }catch(e){ /* ignore */ }
   }
 
@@ -554,7 +555,6 @@ async function warmUpSpeech(){
     els.toggleOverlay.textContent = state.overlay ? "✨ Activée" : "✨ Désactivée";
     // Re-marquer les tirés au chargement
     renderBoard();
-	  warmUpSpeech();
   }
   init();
 
