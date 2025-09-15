@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#0e0f1a">
+<meta name="mobile-web-app-capable" content="yes">
+<script>
+  // Enregistre le service worker
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .catch(err => console.error('SW registration failed', err));
+    });
+  }
+
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;                 // garde l’événement
+  // afficher un bouton "Installer"
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+
+async function triggerInstall() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+}
+
+</script>
+<title>Loto 1–90 • Tirage manuel/auto + voix FR</title>
+<style>
+  :root{
+    --bg: #0e0f1a;
+    --card: rgba(255,255,255,.08);
+    --card-2: rgba(255,255,255,.06);
+    --accent: #6ee7ff;
+    --accent-2: #ff7ab6;
+    --good: #7cffbe;
+    --text: #f5f7ff;
+    --muted: #b7c0d6;
+    --warning: #ffd166;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    color:var(--text); background:
+      radial-gradient(1200px 600px at 10% 10%, #1a1940 0%, transparent 60%),
+      radial-gradient(1000px 700px at 90% 20%, #1a3d40 0%, transparent 65%),
+      radial-gradient(900px 500px at 30% 90%, #402041 0%, transparent 60%),
+      var(--bg);
+  }
+  header{
+    display:flex; align-items:center; gap:12px; padding:16px 20px;
+  }
+  .logo{
+    width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:grid; place-items:center; font-weight:900; color:#0b0b14; letter-spacing:1px;
+    box-shadow: 0 6px 24px rgba(110,231,255,.2), inset 0 0 20px rgba(255,255,255,.15);
+  }
+  h1{font-size: clamp(18px, 3vw, 24px); margin:0; font-weight:800}
+  .sub{color:var(--muted); font-size:12px}
+  main{display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:0 20px 24px}
+  @media (max-width: 980px){ main{grid-template-columns:1fr; } }
+
+  .card{
+    background: var(--card);
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius:16px; backdrop-filter: blur(8px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.35);
+  }
+  .panel{padding:16px}
+  .controls{display:grid; gap:12px}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .row > *{flex:1}
+  button{
+    appearance:none; border:none; cursor:pointer;
+    background: linear-gradient(135deg, var(--accent), #a8e6ff);
+    color:#07131a; font-weight:800; padding:12px 14px; border-radius:12px;
+    box-shadow: 0 8px 18px rgba(110,231,255,.25);
+    transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
+  }
+  button:hover{transform: translateY(-1px)}
+  button:disabled{filter:saturate(.2) brightness(.8); cursor:not-allowed}
+  .secondary{
+    background: linear-gradient(135deg, #ffd4ec, var(--accent-2));
+    color:#2b0f1d; box-shadow: 0 8px 18px rgba(255,122,182,.25);
+  }
+  .neutral{
+    background: linear-gradient(135deg, #e8ecff, #cfe1ff); color:#1a2240;
+    box-shadow: 0 8px 18px rgba(190,206,255,.25);
+  }
+  .danger{
+    background: linear-gradient(135deg, #ffd2d2, #ff8787); color:#3a0f0f;
+    box-shadow: 0 8px 18px rgba(255,135,135,.28);
+  }
+  label{font-size:13px; color:var(--muted)}
+  .group{display:grid; gap:6px}
+  input[type="range"]{width:100%}
+  select, .toggle{
+    background: var(--card-2); color:var(--text); border:1px solid rgba(255,255,255,.08);
+    padding:10px 12px; border-radius:12px; font-weight:600
+  }
+  .chips{
+    display:grid; grid-template-columns: repeat(10, minmax(0,1fr)); gap:8px; padding:14px;
+  }
+  .chip{
+    aspect-ratio:1; border-radius:10px; display:grid; place-items:center;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.07);
+    font-weight:800; font-variant-numeric: tabular-nums;
+    transition: transform .12s ease, background .2s ease, box-shadow .2s ease, border-color .2s ease;
+    user-select:none;
+  }
+  .chip.drawn{
+    background: radial-gradient(circle at 30% 30%, #fff 0%, #ffe 12%, #ffd 25%, #fec 40%, #fdb 60%, #fca 100%);
+    color:#2b1a00; border-color: rgba(255,255,255,.35);
+    box-shadow: inset 0 -4px 8px rgba(0,0,0,.15), 0 6px 16px rgba(0,0,0,.25);
+    transform: translateY(-1px) scale(1.02);
+  }
+  .chip.current{outline:3px solid var(--accent); box-shadow:0 0 0 6px rgba(110,231,255,.2), 0 0 0 12px rgba(110,231,255,.12)}
+  .stats{display:flex; gap:10px; flex-wrap:wrap; padding:10px 14px; color:var(--muted); font-weight:700}
+  .stats .pill{
+    padding:8px 10px; border-radius:999px; background:var(--card-2); border:1px solid rgba(255,255,255,.08);
+  }
+  .progress{height:8px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin:0 14px 14px}
+  .bar{height:100%; width:0%; background: linear-gradient(90deg, var(--good), var(--accent)); transition: width .3s ease}
+
+  /* Fullscreen number overlay */
+  .overlay{
+    position: fixed; inset:0; display:none; place-items:center; z-index:50;
+    background: rgba(0,0,0,.5); backdrop-filter: blur(4px);
+  }
+  .overlay.show{display:grid}
+  .ball{
+    width:min(70vmin,520px); height:min(70vmin,520px); border-radius:50%;
+    display:grid; place-items:center;
+    background:
+      radial-gradient(circle at 30% 30%, #fff, #fefefe 30%, #f4f7ff 60%, #e1e8ff 85%, #ccd8ff 100%);
+    box-shadow:
+      inset 0 -40px 60px rgba(0,0,0,.15),
+      inset 0 40px 60px rgba(255,255,255,.35),
+      0 25px 80px rgba(0,0,0,.45);
+    animation: pop .65s cubic-bezier(.2,1.1,.2,1);
+    position: relative;
+  }
+  .ball::after{
+    content:""; position:absolute; top:10%; left:18%;
+    width:35%; height:35%; border-radius:50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 60%);
+    filter: blur(2px);
+  }
+  @keyframes pop{
+    0%{transform: scale(.8); opacity:0}
+    100%{transform: scale(1); opacity:1}
+  }
+  .num{
+    font-size:min(20vmin, 170px); font-weight:900; color:#0b1431;
+    text-shadow: 0 6px 12px rgba(0,0,0,.2);
+  }
+  .closeX{
+    position:absolute; top:16px; right:16px; background: var(--card);
+    color:var(--text); border:1px solid rgba(255,255,255,.15);
+    border-radius:10px; padding:8px 10px; font-weight:800; cursor:pointer
+  }
+
+  /* Confetti */
+  .confetti{position: fixed; inset:0; pointer-events:none; overflow:hidden; z-index:60}
+  .confetti i{
+    position:absolute; width:10px; height:18px; opacity:0; transform: translateY(-10vh) rotate(0deg);
+    animation: drop 1200ms ease forwards;
+  }
+  @keyframes drop{
+    0%{opacity:1}
+    100%{transform: translateY(110vh) rotate(720deg); opacity:0}
+  }
+
+  footer{padding:10px 20px; color:var(--muted); font-size:12px; text-align:center}
+  .kbd{padding:2px 6px; border-radius:6px; background: var(--card-2); border:1px solid rgba(255,255,255,.12)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">90</div>
+  <div>
+    <h1>Loto 1–90</h1>
+    <button id="installBtn" style="display:none" onclick="triggerInstall()">
+  📲 Installer
+</button>
+
+  </div>
+</header>
+
+<main>
+  <!-- Panneau de contrôle -->
+  <section class="card panel" aria-label="Panneau de contrôle des tirages">
+    <div class="controls">
+      <div class="row">
+        <button id="btnDraw" aria-label="Tirer un numéro (manuel)">🎲 Tirer</button>
+        <button id="btnAuto" class="secondary" aria-pressed="false" aria-label="Activer le tirage automatique">▶️ Auto</button>
+        <button id="btnReset" class="danger" aria-label="Réinitialiser le tirage">↺ Réinitialiser</button>
+      </div>
+
+      <div class="row">
+        <div class="group">
+          <label for="speed">Vitesse auto (ms)</label>
+          <input id="speed" type="range" min="700" max="10000" step="100" value="2000" />
+        </div>
+        <div class="group">
+          <label for="voice">Voix (français)</label>
+          <select id="voice" aria-label="Sélection de la voix française"></select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="group" style="flex:1">
+          <label for="toggleSound">Annonce vocale</label>
+          <button id="toggleSound" class="neutral toggle" aria-pressed="true">🔊 Activée</button>
+        </div>
+        <div class="group" style="flex:1">
+          <label for="toggleOverlay">Animation plein écran</label>
+          <button id="toggleOverlay" class="neutral toggle" aria-pressed="true">✨ Activée</button>
+        </div>
+      </div>
+
+      <div class="stats" aria-live="polite">
+        <span class="pill">Tirés: <strong id="countDrawn">0</strong>/90</span>
+        <span class="pill">Restants: <strong id="countLeft">90</strong></span>
+        <span class="pill">Dernier: <strong id="lastNum">—</strong></span>
+      </div>
+      <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0">
+        <div class="bar" id="progressBar"></div>
+      </div>
+
+      <div class="sub">
+        Raccourcis : <span class="kbd">Espace</span> tirer/pause • <span class="kbd">A</span> auto • <span class="kbd">S</span> son •
+        <span class="kbd">R</span> reset
+      </div>
+    </div>
+  </section>
+
+  <!-- Tableau des numéros -->
+  <section class="card" aria-label="Tableau des numéros">
+    <div class="chips" id="board" role="grid" aria-rowcount="9" aria-colcount="10"></div>
+  </section>
+</main>
+
+<!-- Overlay plein écran -->
+<div class="overlay" id="overlay" aria-hidden="true">
+  <div class="ball" role="dialog" aria-live="assertive" aria-label="Numéro tiré">
+    <div class="num" id="overlayNum">--</div>
+    <button class="closeX" id="closeOverlay" aria-label="Fermer l'animation">✕</button>
+  </div>
+</div>
+
+<div class="confetti" id="confetti"></div>
+
+<footer>
+  Design playful & UX first — tout est sauvegardé en local. Astuce : clique une case pour entendre/voir son numéro à nouveau.
+</footer>
+
+<script>
+(() => {
+  const LS_KEY = "loto_1_90_state_v1";
+  const els = {
+    board: document.getElementById('board'),
+    btnDraw: document.getElementById('btnDraw'),
+    btnAuto: document.getElementById('btnAuto'),
+    btnReset: document.getElementById('btnReset'),
+    speed: document.getElementById('speed'),
+    countDrawn: document.getElementById('countDrawn'),
+    countLeft: document.getElementById('countLeft'),
+    lastNum: document.getElementById('lastNum'),
+    progressBar: document.getElementById('progressBar'),
+    overlay: document.getElementById('overlay'),
+    overlayNum: document.getElementById('overlayNum'),
+    closeOverlay: document.getElementById('closeOverlay'),
+    toggleSound: document.getElementById('toggleSound'),
+    toggleOverlay: document.getElementById('toggleOverlay'),
+    voiceSelect: document.getElementById('voice'),
+    confetti: document.getElementById('confetti'),
+  };
+
+  let state = {
+    order: [],         // séquence (pile) de 1..90 mélangés
+    drawn: [],         // numéros déjà tirés
+    sound: true,
+    overlay: true,
+    auto: false,
+    speed: parseInt(els.speed.value,10),
+    voiceURI: null,
+  };
+
+  let autoTimer = null;
+  const rand = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
+
+  function shuffle(array){
+    // Durstenfeld (Fisher–Yates)
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function newOrder(){
+    return shuffle(Array.from({length:90}, (_,i)=> i+1));
+  }
+
+  function save(){
+    try{
+      localStorage.setItem(LS_KEY, JSON.stringify({
+        order: state.order,
+        drawn: state.drawn,
+        sound: state.sound,
+        overlay: state.overlay,
+        speed: state.speed,
+        auto: false, // on ne persiste pas l'auto en cours
+        voiceURI: state.voiceURI || null,
+      }));
+    }catch(e){ console.warn("LocalStorage indisponible", e); }
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      state = {...state, ...s};
+    }catch(e){ /* ignore */ }
+  }
+
+  function speak(text){
+    if (!state.sound || !('speechSynthesis' in window)) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    let voice = null;
+    if (state.voiceURI){
+      voice = speechSynthesis.getVoices().find(v => v.voiceURI === state.voiceURI);
+    }
+    if (!voice){
+      // Choisir une voix fr par défaut
+      const frVoices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('fr'));
+      voice = frVoices[0] || speechSynthesis.getVoices()[0];
+    }
+    if (voice) utter.voice = voice;
+    utter.lang = 'fr-FR';
+    utter.rate = 1;
+    speechSynthesis.cancel(); // couper l'annonce précédente
+    speechSynthesis.speak(utter);
+  }
+
+  function naturalNumberPhrase(n){
+    // Exemple d'annonce : "Numéro: 42" (on évite de dire "quarante-deux" pour simplicité/neutralité)
+    return `${n}`;
+  }
+
+  function renderBoard(){
+    els.board.innerHTML = "";
+    for (let i=1;i<=90;i++){
+      const cell = document.createElement('div');
+      cell.className = 'chip';
+      cell.role = 'gridcell';
+      cell.ariaLabel = `Numéro ${i}`;
+      cell.textContent = i;
+      if (state.drawn.includes(i)) cell.classList.add('drawn');
+      if (state.drawn[state.drawn.length-1] === i) cell.classList.add('current');
+
+      // Re-jouer l'animation/voix en cliquant une case déjà tirée
+      cell.addEventListener('click', () => {
+        if (!state.drawn.includes(i)) return;
+        showOverlay(i);
+        speak(naturalNumberPhrase(i));
+        flashConfetti(14);
+      });
+
+      els.board.appendChild(cell);
+    }
+  }
+
+  function updateStats(){
+    els.countDrawn.textContent = state.drawn.length;
+    els.countLeft.textContent = 90 - state.drawn.length;
+    els.lastNum.textContent = state.drawn[state.drawn.length-1] ?? '—';
+    const pct = (state.drawn.length/90)*100;
+    els.progressBar.style.width = `${pct}%`;
+    document.querySelector('.progress').setAttribute('aria-valuenow', String(state.drawn.length));
+  }
+
+  function showOverlay(n){
+    if (!state.overlay) return;
+    els.overlayNum.textContent = n;
+    els.overlay.classList.add('show');
+    els.overlay.setAttribute('aria-hidden','false');
+  }
+  function hideOverlay(){
+    els.overlay.classList.remove('show');
+    els.overlay.setAttribute('aria-hidden','true');
+  }
+
+  function flashConfetti(count=24){
+    // Petits confettis simple CSS
+    els.confetti.innerHTML = "";
+    const palette = ['#6ee7ff','#ff7ab6','#ffd166','#7cffbe','#c9b1ff','#fff'];
+    for (let i=0;i<count;i++){
+      const piece = document.createElement('i');
+      piece.style.left = rand(0,100) + 'vw';
+      piece.style.top = '-5vh';
+      piece.style.background = palette[rand(0, palette.length-1)];
+      piece.style.transform = `translateY(-10vh) rotate(${rand(0,360)}deg)`;
+      piece.style.animationDuration = (900 + rand(0,600)) + 'ms';
+      piece.style.animationDelay = (rand(0,400)) + 'ms';
+      els.confetti.appendChild(piece);
+    }
+    // Nettoyage
+    setTimeout(()=> els.confetti.innerHTML = "", 2000);
+  }
+
+  function drawOne(){
+    if (state.drawn.length >= 90){
+      finishDraw();
+      return null;
+    }
+    if (state.order.length === 0){
+      state.order = newOrder().filter(n => !state.drawn.includes(n));
+    }
+    const n = state.order.pop();
+    state.drawn.push(n);
+    save();
+    renderBoard();
+    updateStats();
+    showOverlay(n);
+    speak(naturalNumberPhrase(n));
+    flashConfetti(28);
+
+    // Fin ?
+    if (state.drawn.length === 90){
+      finishDraw();
+    }
+    return n;
+  }
+
+  function finishDraw(){
+    stopAuto();
+    speak("Fin du tirage");
+    // petite rafale finale
+    flashConfetti(80);
+    setTimeout(()=> flashConfetti(80), 350);
+  }
+
+  function startAuto(){
+    if (state.auto || state.drawn.length >= 90) return;
+    state.auto = true;
+    els.btnAuto.setAttribute('aria-pressed','true');
+    els.btnAuto.textContent = "⏸️ Pause auto";
+    els.btnDraw.disabled = true;
+    autoTimer = setInterval(() => {
+      const v = drawOne();
+      if (v === null || state.drawn.length >= 90){ stopAuto(); }
+    }, state.speed);
+    save();
+  }
+
+  function stopAuto(){
+    state.auto = false;
+    els.btnAuto.setAttribute('aria-pressed','false');
+    els.btnAuto.textContent = "▶️ Auto";
+    els.btnDraw.disabled = false;
+    if (autoTimer) clearInterval(autoTimer);
+    autoTimer = null;
+    save();
+  }
+
+  function toggleAuto(){
+    state.auto ? stopAuto() : startAuto();
+  }
+
+  function resetAll(confirmUser=true){
+    const proceed = !confirmUser || confirm("Réinitialiser le tirage ? Les numéros tirés seront effacés.");
+    if (!proceed) return;
+    stopAuto();
+    state.order = newOrder();
+    state.drawn = [];
+    save();
+    renderBoard();
+    updateStats();
+    els.lastNum.textContent = '—';
+    hideOverlay();
+  }
+
+  // UI bindings
+  els.btnDraw.addEventListener('click', () => drawOne());
+  els.btnAuto.addEventListener('click', () => toggleAuto());
+  els.btnReset.addEventListener('click', () => resetAll(true));
+  els.speed.addEventListener('input', e => {
+    state.speed = parseInt(e.target.value,10);
+    save();
+    if (state.auto){ // appliquer immédiatement
+      stopAuto(); startAuto();
+    }
+  });
+  els.closeOverlay.addEventListener('click', hideOverlay);
+  els.overlay.addEventListener('click', (e)=> { if (e.target === els.overlay) hideOverlay(); });
+
+  els.toggleSound.addEventListener('click', () => {
+    state.sound = !state.sound;
+    els.toggleSound.textContent = state.sound ? "🔊 Activée" : "🔇 Désactivée";
+    els.toggleSound.setAttribute('aria-pressed', String(state.sound));
+    save();
+  });
+  els.toggleOverlay.addEventListener('click', () => {
+    state.overlay = !state.overlay;
+    els.toggleOverlay.textContent = state.overlay ? "✨ Activée" : "✨ Désactivée";
+    els.toggleOverlay.setAttribute('aria-pressed', String(state.overlay));
+    save();
+  });
+
+  // Clavier
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' '){ e.preventDefault(); state.auto ? stopAuto() : drawOne(); }
+    if (e.key.toLowerCase() === 'a'){ toggleAuto(); }
+    if (e.key.toLowerCase() === 's'){ els.toggleSound.click(); }
+    if (e.key.toLowerCase() === 'r'){ resetAll(true); }
+    if (e.key === 'Escape'){ hideOverlay(); }
+  });
+
+  // SpeechSynthesis: remplir la liste des voix fr
+  function populateVoices(){
+    const voices = speechSynthesis.getVoices();
+    const frVoices = voices.filter(v => v.lang?.toLowerCase().startsWith('fr'));
+    els.voiceSelect.innerHTML = "";
+    if (frVoices.length === 0){
+      const opt = document.createElement('option');
+      opt.textContent = "Aucune voix FR détectée";
+      opt.value = "";
+      els.voiceSelect.appendChild(opt);
+      els.voiceSelect.disabled = true;
+      return;
+    }
+    // Favoriser une voix "Amélie" si présente
+    frVoices.sort((a,b)=>{
+      const nameA = a.name.toLowerCase(), nameB = b.name.toLowerCase();
+      // pousser "Amélie"/"Amelie" en tête si dispo
+      const score = (s)=> s.includes('amélie') || s.includes('amelie') ? -1 : 0;
+      return score(nameA) - score(nameB);
+    });
+    frVoices.forEach(v=>{
+      const opt = document.createElement('option');
+      opt.value = v.voiceURI;
+      opt.textContent = `${v.name} — ${v.lang}`;
+      els.voiceSelect.appendChild(opt);
+    });
+    // sélectionner l'existante si possible
+    const selected = frVoices.find(v => v.voiceURI === state.voiceURI) || frVoices[0];
+    state.voiceURI = selected.voiceURI;
+    els.voiceSelect.value = state.voiceURI;
+    els.voiceSelect.disabled = false;
+  }
+  if ('speechSynthesis' in window){
+    speechSynthesis.onvoiceschanged = populateVoices;
+    // Certains navigateurs nécessitent un appel pour déclencher le chargement
+    setTimeout(populateVoices, 100);
+    els.voiceSelect.addEventListener('change', () => {
+      state.voiceURI = els.voiceSelect.value || null;
+      save();
+      if (state.sound){
+        speak("Voix sélectionnée");
+      }
+    });
+  } else {
+    els.toggleSound.textContent = "⛔ Non supporté";
+    els.toggleSound.disabled = true;
+  }
+
+async function warmUpSpeech(){
+  if (!('speechSynthesis' in window)) return;
+  return new Promise(resolve => {
+    const u = new SpeechSynthesisUtterance('ok');
+    u.lang = 'fr-FR';
+    u.volume = 0; // inaudible
+    u.onend = resolve;
+    speechSynthesis.speak(u);
+  });
+}
+// Appelle warmUpSpeech() à la première interaction utilisateur
+
+
+  // Init
+  function init(){
+    load();
+    if (!state.order || state.order.length === 0){
+      state.order = newOrder();
+    }
+    renderBoard();
+    updateStats();
+    els.speed.value = state.speed;
+    els.toggleSound.setAttribute('aria-pressed', String(state.sound));
+    els.toggleSound.textContent = state.sound ? "🔊 Activée" : "🔇 Désactivée";
+    els.toggleOverlay.setAttribute('aria-pressed', String(state.overlay));
+    els.toggleOverlay.textContent = state.overlay ? "✨ Activée" : "✨ Désactivée";
+    // Re-marquer les tirés au chargement
+    renderBoard();
+	  warmUpSpeech();
+  }
+  init();
+
+})();
+</script>
+</body>
+</html>
