@@ -2,14 +2,13 @@
 <html lang="fr">
 <head>
 <link rel="manifest" href="./manifest.webmanifest">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="theme-color" content="#0e0f1a">
+<meta name="mobile-web-app-capable" content="yes">
 <script>
-  // Enregistre le service worker
-  if ('serviceWorker' in navigator) {
+  // Enregistre le service worker (uniquement sur un vrai serveur HTTP/HTTPS)
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
         .catch(err => console.error('SW registration failed', err));
@@ -57,17 +56,19 @@ async function triggerInstall() {
       var(--bg);
   }
   header{
-    display:flex; align-items:center; gap:12px; padding:16px 20px;
+    display:flex; align-items:center; gap:12px; padding:12px 16px;
   }
   .logo{
     width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent-2));
     display:grid; place-items:center; font-weight:900; color:#0b0b14; letter-spacing:1px;
     box-shadow: 0 6px 24px rgba(110,231,255,.2), inset 0 0 20px rgba(255,255,255,.15);
+    flex-shrink:0;
   }
-  h1{font-size: clamp(18px, 3vw, 24px); margin:0; font-weight:800}
+  h1{font-size: clamp(16px, 3vw, 24px); margin:0; font-weight:800}
   .sub{color:var(--muted); font-size:12px}
-  main{display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:0 20px 24px}
-  @media (max-width: 980px){ main{grid-template-columns:1fr; } }
+  main{display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:0 16px 24px}
+  @media (max-width: 980px){ main{grid-template-columns:1fr; gap:12px; padding:0 10px 16px} }
+  @media (max-width: 480px){ main{gap:10px; padding:0 8px 12px} }
 
   .card{
     background: var(--card);
@@ -75,18 +76,26 @@ async function triggerInstall() {
     border-radius:16px; backdrop-filter: blur(8px);
     box-shadow: 0 8px 30px rgba(0,0,0,.35);
   }
-  .panel{padding:16px}
-  .controls{display:grid; gap:12px}
-  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-  .row > *{flex:1}
+  .panel{padding:14px}
+  @media (max-width:480px){.panel{padding:10px}}
+  .controls{display:grid; gap:10px}
+  @media (max-width:480px){.controls{gap:8px}}
+  .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+  .row > *{flex:1; min-width:0}
   button{
     appearance:none; border:none; cursor:pointer;
     background: linear-gradient(135deg, var(--accent), #a8e6ff);
-    color:#07131a; font-weight:800; padding:12px 14px; border-radius:12px;
+    color:#07131a; font-weight:800; padding:12px 10px; border-radius:12px;
+    font-size:clamp(13px, 3.5vw, 15px);
     box-shadow: 0 8px 18px rgba(110,231,255,.25);
     transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
+    white-space: nowrap; min-height: 48px; touch-action: manipulation;
+  }
+  @media (max-width:480px){
+    button{padding:10px 8px; border-radius:10px; min-height:52px;}
   }
   button:hover{transform: translateY(-1px)}
+  button:active{transform: translateY(0) scale(.97)}
   button:disabled{filter:saturate(.2) brightness(.8); cursor:not-allowed}
   .secondary{
     background: linear-gradient(135deg, #ffd4ec, var(--accent-2));
@@ -108,15 +117,22 @@ async function triggerInstall() {
     padding:10px 12px; border-radius:12px; font-weight:600
   }
   .chips{
-    display:grid; grid-template-columns: repeat(10, minmax(0,1fr)); gap:8px; padding:14px;
+    display:grid; grid-template-columns: repeat(10, minmax(0,1fr)); gap:6px; padding:12px;
+  }
+  @media (max-width:480px){
+    .chips{gap:4px; padding:8px;}
   }
   .chip{
-    aspect-ratio:1; border-radius:10px; display:grid; place-items:center;
+    aspect-ratio:1; border-radius:8px; display:grid; place-items:center;
     background: rgba(255,255,255,.06);
     border:1px solid rgba(255,255,255,.07);
     font-weight:800; font-variant-numeric: tabular-nums;
+    font-size: clamp(10px, 2.5vw, 15px);
     transition: transform .12s ease, background .2s ease, box-shadow .2s ease, border-color .2s ease;
-    user-select:none;
+    user-select:none; cursor:pointer;
+  }
+  @media (max-width:480px){
+    .chip{border-radius:6px;}
   }
   .chip.drawn{
     background: radial-gradient(circle at 30% 30%, #fff 0%, #ffe 12%, #ffd 25%, #fec 40%, #fdb 60%, #fca 100%);
@@ -125,11 +141,12 @@ async function triggerInstall() {
     transform: translateY(-1px) scale(1.02);
   }
   .chip.current{outline:3px solid var(--accent); box-shadow:0 0 0 6px rgba(110,231,255,.2), 0 0 0 12px rgba(110,231,255,.12)}
-  .stats{display:flex; gap:10px; flex-wrap:wrap; padding:10px 14px; color:var(--muted); font-weight:700}
+  .stats{display:flex; gap:8px; flex-wrap:wrap; padding:8px 12px; color:var(--muted); font-weight:700}
   .stats .pill{
-    padding:8px 10px; border-radius:999px; background:var(--card-2); border:1px solid rgba(255,255,255,.08);
+    padding:6px 10px; border-radius:999px; background:var(--card-2); border:1px solid rgba(255,255,255,.08);
+    font-size:clamp(12px,3vw,14px);
   }
-  .progress{height:8px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin:0 14px 14px}
+  .progress{height:8px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin:0 12px 12px}
   .bar{height:100%; width:0%; background: linear-gradient(90deg, var(--good), var(--accent)); transition: width .3s ease}
 
   /* Fullscreen number overlay */
@@ -170,62 +187,195 @@ async function triggerInstall() {
     border-radius:10px; padding:8px 10px; font-weight:800; cursor:pointer
   }
 
+  /* Confetti */
+  .confetti{position: fixed; inset:0; pointer-events:none; overflow:hidden; z-index:60}
+  .confetti i{
+    position:absolute; width:10px; height:18px; opacity:0; transform: translateY(-10vh) rotate(0deg);
+    animation: drop 1200ms ease forwards;
+  }
   @keyframes drop{
     0%{opacity:1}
     100%{transform: translateY(110vh) rotate(720deg); opacity:0}
   }
 
-  footer{padding:10px 20px; color:var(--muted); font-size:12px; text-align:center}
+  /* ── Panneau paramètres redesigné ── */
+  .settings-title{
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--muted); padding: 4px 0 2px;
+  }
+
+  .setting-row{
+    display:flex; flex-direction:column;
+    gap:8px; padding:10px 12px; border-radius:12px;
+    background: var(--card-2); border:1px solid rgba(255,255,255,.06);
+  }
+  .setting-row.inline{flex-direction:row; align-items:center; justify-content:space-between}
+  .setting-info{display:flex; align-items:center; gap:10px; min-width:0}
+  .setting-icon{font-size:18px; flex-shrink:0}
+  .setting-label{font-size:13px; font-weight:700; color:var(--text)}
+  .setting-desc{font-size:11px; color:var(--muted); margin-top:1px}
+
+  .slider{width:100%; accent-color:var(--accent); margin:0}
+
+  .setting-select{
+    background: rgba(255,255,255,.1); color:var(--text);
+    border:1px solid rgba(255,255,255,.1);
+    padding:6px 8px; border-radius:8px; font-weight:600; font-size:12px;
+    max-width:150px; flex-shrink:0;
+  }
+  @media(max-width:480px){.setting-select{max-width:110px; font-size:11px}}
+
+  /* Toggles : lignes compactes avec pill-button */
+  .toggles-row{display:flex; flex-direction:column; gap:6px}
+  .toggle-item{
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-radius:12px;
+    background: var(--card-2); border:1px solid rgba(255,255,255,.06);
+  }
+  .toggle-icon{font-size:17px; flex-shrink:0}
+  .toggle-label{font-size:13px; font-weight:700; color:var(--text); flex:1}
+
+  /* Pill toggle */
+  .toggle-switch{
+    display:flex; align-items:center; gap:5px;
+    padding:5px 12px 5px 8px;
+    border-radius:999px; border:1.5px solid rgba(255,255,255,.12);
+    background: rgba(255,255,255,.07);
+    cursor:pointer; flex-shrink:0;
+    font-size:12px; font-weight:800; color:var(--muted);
+    transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
+    box-shadow: none; min-height:0;
+  }
+  .toggle-switch::before{
+    content:''; display:block; width:8px; height:8px; border-radius:50%;
+    background: rgba(255,255,255,.25);
+    transition: background .2s;
+    flex-shrink:0;
+  }
+  .toggle-switch[aria-pressed="true"]{
+    background: rgba(110,231,255,.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 10px rgba(110,231,255,.2);
+  }
+  .toggle-switch[aria-pressed="true"]::before{
+    background: var(--accent);
+    box-shadow: 0 0 6px rgba(110,231,255,.6);
+  }
+  .toggle-switch .t-off{ display:inline }
+  .toggle-switch .t-on { display:none }
+  .toggle-switch[aria-pressed="true"] .t-off{ display:none }
+  .toggle-switch[aria-pressed="true"] .t-on { display:inline }
+
+  /* Boutons d'action en bas */
+  .action-row{
+    display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:4px;
+  }
+  .btn-action{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:4px; padding:14px 8px; border-radius:14px; font-size:22px; min-height:70px;
+  }
+  .btn-action span{font-size:12px; font-weight:800; letter-spacing:.02em}
+  @media(max-width:480px){.btn-action{min-height:64px; padding:12px 6px}}
+
+  footer{padding:8px 16px; color:var(--muted); font-size:11px; text-align:center}
   .kbd{padding:2px 6px; border-radius:6px; background: var(--card-2); border:1px solid rgba(255,255,255,.12)}
+
+  /* Bannière pause appel */
+  #callBanner{
+    display:none; position:fixed; top:0; left:0; right:0; z-index:200;
+    background: linear-gradient(90deg, #ffd166, #ffb347);
+    color:#1a0a00; font-weight:800; font-size:15px;
+    padding:12px 16px; text-align:center;
+    box-shadow: 0 4px 20px rgba(255,180,0,.4);
+    animation: slideDown .25s ease;
+  }
+  #callBanner.show{display:block}
+  @keyframes slideDown{
+    from{transform:translateY(-100%)}
+    to{transform:translateY(0)}
+  }
 </style>
 </head>
 <body>
+<div id="callBanner">📞 Appel en cours — Tirage mis en pause</div>
 <header>
-	<button id="installBtn" style="display:none" onclick="triggerInstall()">
- 	 📲 Installer
-	</button>
+  <div class="logo">90</div>
+  <div>
+    <h1>Loto 1–90</h1>
+    <button id="installBtn" style="display:none" onclick="triggerInstall()">
+  📲 Installer
+</button>
+
+  </div>
 </header>
 
 <main>
   <!-- Panneau de contrôle -->
   <section class="card panel" aria-label="Panneau de contrôle des tirages">
     <div class="controls">
-      <div class="row">
-        <button id="btnDraw" aria-label="Tirer un numéro (manuel)">🎲 Tirer</button>
-        <button id="btnAuto" class="secondary" aria-pressed="false" aria-label="Activer le tirage automatique">▶️ Auto</button>
-        <button id="btnReset" class="danger" aria-label="Réinitialiser le tirage">↺ Réinitialiser</button>
-      </div>
 
-      <div class="row">
-        <div class="group">
-          <label for="speed">Vitesse auto (ms)</label>
-          <input id="speed" type="range" min="700" max="10000" step="100" value="8000" />
-        </div>
-        <div class="group">
-          <label for="voice">Voix (français)</label>
-          <select id="voice" aria-label="Sélection de la voix française"></select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="group" style="flex:1">
-          <label for="toggleSound">Annonce vocale</label>
-          <button id="toggleSound" class="neutral toggle" aria-pressed="true">🔊 Activée</button>
-        </div>
-        <div class="group" style="flex:1">
-          <label for="toggleOverlay">Animation plein écran</label>
-          <button id="toggleOverlay" class="neutral toggle" aria-pressed="false">✨ Désactivée</button>
-        </div>
-      </div>
-
+      <!-- Statistiques + progression -->
       <div class="stats" aria-live="polite">
-        <span class="pill">Tirés: <strong id="countDrawn">0</strong>/90</span>
-        <span class="pill">Restants: <strong id="countLeft">90</strong></span>
-        <span class="pill">Dernier: <strong id="lastNum">—</strong></span>
+        <span class="pill">🎯 Tirés : <strong id="countDrawn">0</strong>/90</span>
+        <span class="pill">⏳ Restants : <strong id="countLeft">90</strong></span>
+        <span class="pill">🔔 Dernier : <strong id="lastNum">—</strong></span>
       </div>
       <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0">
         <div class="bar" id="progressBar"></div>
       </div>
+
+      <!-- Séparateur paramètres -->
+      <div class="settings-title">⚙️ Paramètres</div>
+
+      <!-- Vitesse -->
+      <div class="setting-row">
+        <div class="setting-info">
+          <span class="setting-icon">⏱️</span>
+          <div>
+            <div class="setting-label">Vitesse automatique</div>
+            <div class="setting-desc" id="speedLabel">2 s entre chaque tirage</div>
+          </div>
+        </div>
+        <input id="speed" type="range" min="700" max="10000" step="100" value="2000" class="slider" />
+      </div>
+
+      <!-- Voix -->
+      <div class="setting-row inline">
+        <div class="setting-info">
+          <span class="setting-icon">🗣️</span>
+          <div>
+            <div class="setting-label">Voix française</div>
+          </div>
+        </div>
+        <select id="voice" aria-label="Sélection de la voix française" class="setting-select"></select>
+      </div>
+
+      <!-- Toggles -->
+      <div class="toggles-row">
+        <div class="toggle-item">
+          <span class="toggle-icon">🔊</span>
+          <div class="toggle-label">Annonce vocale</div>
+          <button id="toggleSound" class="toggle-switch" aria-pressed="true" role="switch">
+            <span class="t-on">Activée</span><span class="t-off">Désactivée</span>
+          </button>
+        </div>
+        <div class="toggle-item">
+          <span class="toggle-icon">✨</span>
+          <div class="toggle-label">Animation plein écran</div>
+          <button id="toggleOverlay" class="toggle-switch" aria-pressed="false" role="switch">
+            <span class="t-on">Activée</span><span class="t-off">Désactivée</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Boutons d'action en bas -->
+      <div class="action-row">
+        <button id="btnDraw" class="btn-action" aria-label="Tirer un numéro (manuel)">🎲<span>Tirer</span></button>
+        <button id="btnAuto" class="btn-action btn-auto secondary" aria-pressed="false" aria-label="Activer le tirage automatique">▶️<span>Auto</span></button>
+        <button id="btnReset" class="btn-action danger" aria-label="Réinitialiser le tirage">↺<span>Reset</span></button>
+      </div>
+
     </div>
   </section>
 
@@ -243,8 +393,10 @@ async function triggerInstall() {
   </div>
 </div>
 
+<div class="confetti" id="confetti"></div>
+
 <footer>
-- <a href="https://jmarvillier.github.io/loto190/"> https://jmarvillier.github.io/loto190/</a> - 2025 -
+  Design playful & UX first — tout est sauvegardé en local. Astuce : clique une case pour entendre/voir son numéro à nouveau.
 </footer>
 
 <script>
@@ -266,6 +418,7 @@ async function triggerInstall() {
     toggleSound: document.getElementById('toggleSound'),
     toggleOverlay: document.getElementById('toggleOverlay'),
     voiceSelect: document.getElementById('voice'),
+    confetti: document.getElementById('confetti'),
   };
 
   let state = {
@@ -279,6 +432,7 @@ async function triggerInstall() {
   };
 
   let autoTimer = null;
+  let speechWarmedUp = false;
   const rand = (min,max) => Math.floor(Math.random()*(max-min+1))+min;
 
   function shuffle(array){
@@ -314,27 +468,37 @@ async function triggerInstall() {
       if (!raw) return;
       const s = JSON.parse(raw);
       state = {...state, ...s};
-		warmUpSpeech();
+      // Valeurs par défaut imposées indépendamment du localStorage
+      state.overlay = false;   // toujours désactivé par défaut
+      if (state.sound === undefined) state.sound = true;
     }catch(e){ /* ignore */ }
   }
 
   function speak(text){
     if (!state.sound || !('speechSynthesis' in window)) return;
-    const utter = new SpeechSynthesisUtterance(text);
-    let voice = null;
-    if (state.voiceURI){
-      voice = speechSynthesis.getVoices().find(v => v.voiceURI === state.voiceURI);
+
+    function doSpeak(){
+      const utter = new SpeechSynthesisUtterance(text);
+      let voice = null;
+      if (state.voiceURI){
+        voice = speechSynthesis.getVoices().find(v => v.voiceURI === state.voiceURI);
+      }
+      if (!voice){
+        const frVoices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('fr'));
+        voice = frVoices[0] || speechSynthesis.getVoices()[0];
+      }
+      if (voice) utter.voice = voice;
+      utter.lang = 'fr-FR';
+      utter.rate = 0.95;
+      speechSynthesis.speak(utter);
     }
-    if (!voice){
-      // Choisir une voix fr par défaut
-      const frVoices = speechSynthesis.getVoices().filter(v => v.lang?.toLowerCase().startsWith('fr'));
-      voice = frVoices[0] || speechSynthesis.getVoices()[0];
+
+    if (speechSynthesis.speaking || speechSynthesis.pending) {
+      speechSynthesis.cancel();
+      setTimeout(doSpeak, 150);
+    } else {
+      doSpeak();
     }
-    if (voice) utter.voice = voice;
-    utter.lang = 'fr-FR';
-    utter.rate = 1;
-    speechSynthesis.cancel(); // couper l'annonce précédente
-    speechSynthesis.speak(utter);
   }
 
   function naturalNumberPhrase(n){
@@ -358,6 +522,7 @@ async function triggerInstall() {
         if (!state.drawn.includes(i)) return;
         showOverlay(i);
         speak(naturalNumberPhrase(i));
+        flashConfetti(14);
       });
 
       els.board.appendChild(cell);
@@ -384,6 +549,24 @@ async function triggerInstall() {
     els.overlay.setAttribute('aria-hidden','true');
   }
 
+  function flashConfetti(count=24){
+    // Petits confettis simple CSS
+    els.confetti.innerHTML = "";
+    const palette = ['#6ee7ff','#ff7ab6','#ffd166','#7cffbe','#c9b1ff','#fff'];
+    for (let i=0;i<count;i++){
+      const piece = document.createElement('i');
+      piece.style.left = rand(0,100) + 'vw';
+      piece.style.top = '-5vh';
+      piece.style.background = palette[rand(0, palette.length-1)];
+      piece.style.transform = `translateY(-10vh) rotate(${rand(0,360)}deg)`;
+      piece.style.animationDuration = (900 + rand(0,600)) + 'ms';
+      piece.style.animationDelay = (rand(0,400)) + 'ms';
+      els.confetti.appendChild(piece);
+    }
+    // Nettoyage
+    setTimeout(()=> els.confetti.innerHTML = "", 2000);
+  }
+
   function drawOne(){
     if (state.drawn.length >= 90){
       finishDraw();
@@ -399,6 +582,7 @@ async function triggerInstall() {
     updateStats();
     showOverlay(n);
     speak(naturalNumberPhrase(n));
+    flashConfetti(28);
 
     // Fin ?
     if (state.drawn.length === 90){
@@ -410,13 +594,16 @@ async function triggerInstall() {
   function finishDraw(){
     stopAuto();
     speak("Fin du tirage");
+    // petite rafale finale
+    flashConfetti(80);
+    setTimeout(()=> flashConfetti(80), 350);
   }
 
   function startAuto(){
     if (state.auto || state.drawn.length >= 90) return;
     state.auto = true;
     els.btnAuto.setAttribute('aria-pressed','true');
-    els.btnAuto.textContent = "⏸️ Pause auto";
+    els.btnAuto.innerHTML = "⏸️<span>Pause</span>";
     els.btnDraw.disabled = true;
     autoTimer = setInterval(() => {
       const v = drawOne();
@@ -428,7 +615,7 @@ async function triggerInstall() {
   function stopAuto(){
     state.auto = false;
     els.btnAuto.setAttribute('aria-pressed','false');
-    els.btnAuto.textContent = "▶️ Auto";
+    els.btnAuto.innerHTML = "▶️<span>Auto</span>";
     els.btnDraw.disabled = false;
     if (autoTimer) clearInterval(autoTimer);
     autoTimer = null;
@@ -439,9 +626,7 @@ async function triggerInstall() {
     state.auto ? stopAuto() : startAuto();
   }
 
-  function resetAll(confirmUser=true){
-    const proceed = !confirmUser || confirm("Réinitialiser le tirage ? Les numéros tirés seront effacés.");
-    if (!proceed) return;
+  function resetAll(){
     stopAuto();
     state.order = newOrder();
     state.drawn = [];
@@ -453,30 +638,48 @@ async function triggerInstall() {
   }
 
   // UI bindings
-  els.btnDraw.addEventListener('click', () => drawOne());
-  els.btnAuto.addEventListener('click', () => toggleAuto());
-  els.btnReset.addEventListener('click', () => resetAll(true));
+  els.btnDraw.addEventListener('click', () => {
+    if (!speechWarmedUp){ speechWarmedUp = true; warmUpSpeech(); }
+    drawOne();
+  });
+  els.btnAuto.addEventListener('click', () => {
+    if (!speechWarmedUp){ speechWarmedUp = true; warmUpSpeech(); }
+    toggleAuto();
+  });
+  els.btnReset.addEventListener('click', () => resetAll());
+  function updateSpeedLabel(ms){
+    const s = (ms/1000).toFixed(1).replace('.0','');
+    const el = document.getElementById('speedLabel');
+    if(el) el.textContent = `${s} s entre chaque tirage`;
+  }
+
   els.speed.addEventListener('input', e => {
     state.speed = parseInt(e.target.value,10);
+    updateSpeedLabel(state.speed);
     save();
-    if (state.auto){ // appliquer immédiatement
-      stopAuto(); startAuto();
-    }
+    if (state.auto){ stopAuto(); startAuto(); }
   });
   els.closeOverlay.addEventListener('click', hideOverlay);
   els.overlay.addEventListener('click', (e)=> { if (e.target === els.overlay) hideOverlay(); });
 
   els.toggleSound.addEventListener('click', () => {
     state.sound = !state.sound;
-    els.toggleSound.textContent = state.sound ? "🔊 Activée" : "🔇 Désactivée";
     els.toggleSound.setAttribute('aria-pressed', String(state.sound));
     save();
   });
   els.toggleOverlay.addEventListener('click', () => {
     state.overlay = !state.overlay;
-    els.toggleOverlay.textContent = state.overlay ? "✨ Activée" : "✨ Désactivée";
     els.toggleOverlay.setAttribute('aria-pressed', String(state.overlay));
     save();
+  });
+
+  // Clavier
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' '){ e.preventDefault(); state.auto ? stopAuto() : drawOne(); }
+    if (e.key.toLowerCase() === 'a'){ toggleAuto(); }
+    if (e.key.toLowerCase() === 's'){ els.toggleSound.click(); }
+    if (e.key.toLowerCase() === 'r'){ resetAll(); }
+    if (e.key === 'Escape'){ hideOverlay(); }
   });
 
   // SpeechSynthesis: remplir la liste des voix fr
@@ -529,16 +732,41 @@ async function triggerInstall() {
 
 async function warmUpSpeech(){
   if (!('speechSynthesis' in window)) return;
-  return new Promise(resolve => {
-    const u = new SpeechSynthesisUtterance('ok');
-    u.lang = 'fr-FR';
-    u.volume = 0; // inaudible
-    u.onend = resolve;
-    speechSynthesis.speak(u);
-  });
+  // iOS exige un speechSynthesis.speak() dans un vrai event handler utilisateur
+  // On envoie un espace silencieux pour déverrouiller l'audio
+  const u = new SpeechSynthesisUtterance(' ');
+  u.lang = 'fr-FR';
+  u.volume = 0.01;
+  u.rate = 2;
+  speechSynthesis.speak(u);
 }
 // Appelle warmUpSpeech() à la première interaction utilisateur
 
+
+  // ── Pause automatique lors d'un appel téléphonique ──────────────────────
+  // L'API Page Visibility se déclenche quand l'écran est masqué (appel entrant,
+  // basculement d'app). On met en pause l'auto et on l'indique visuellement.
+  let pausedByCall = false;
+  const callBanner = document.getElementById('callBanner');
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      // L'appli passe en arrière-plan (appel, autre app…)
+      if (state.auto) {
+        stopAuto();
+        pausedByCall = true;
+        speechSynthesis.cancel(); // stopper l'annonce vocale en cours
+      }
+    } else {
+      // Retour au premier plan
+      if (pausedByCall) {
+        callBanner.classList.add('show');
+        pausedByCall = false;
+        // Masquer la bannière après 4 s
+        setTimeout(() => callBanner.classList.remove('show'), 4000);
+      }
+    }
+  });
 
   // Init
   function init(){
@@ -550,10 +778,8 @@ async function warmUpSpeech(){
     updateStats();
     els.speed.value = state.speed;
     els.toggleSound.setAttribute('aria-pressed', String(state.sound));
-    els.toggleSound.textContent = state.sound ? "🔊 Activée" : "🔇 Désactivée";
     els.toggleOverlay.setAttribute('aria-pressed', String(state.overlay));
-    els.toggleOverlay.textContent = state.overlay ? "✨ Activée" : "✨ Désactivée";
-    // Re-marquer les tirés au chargement
+    updateSpeedLabel(state.speed);
     renderBoard();
   }
   init();
