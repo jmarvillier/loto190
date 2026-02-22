@@ -55,20 +55,46 @@ async function triggerInstall() {
       radial-gradient(900px 500px at 30% 90%, #402041 0%, transparent 60%),
       var(--bg);
   }
-  header{
-    display:flex; align-items:center; gap:12px; padding:12px 16px;
+  /* Header fusionné dans le panel */
+  .header-stats{
+    display:flex; align-items:center; gap:8px; 
+  }
+  .logo-group{
+    display:flex; align-items:center; gap:7px; flex-shrink:0;
   }
   .logo{
-    width:40px; height:40px; border-radius:12px; background:linear-gradient(135deg,var(--accent),var(--accent-2));
-    display:grid; place-items:center; font-weight:900; color:#0b0b14; letter-spacing:1px;
-    box-shadow: 0 6px 24px rgba(110,231,255,.2), inset 0 0 20px rgba(255,255,255,.15);
-    flex-shrink:0;
+    width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent-2));
+    display:grid; place-items:center; font-weight:900; color:#0b0b14; font-size:10px;
+    box-shadow: 0 3px 10px rgba(110,231,255,.25); flex-shrink:0;
   }
-  h1{font-size: clamp(16px, 3vw, 24px); margin:0; font-weight:800}
-  .sub{color:var(--muted); font-size:12px}
-  main{display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:0 16px 24px}
-  @media (max-width: 980px){ main{grid-template-columns:1fr; gap:12px; padding:0 10px 16px} }
-  @media (max-width: 480px){ main{gap:10px; padding:0 8px 12px} }
+  .logo-title{
+    font-size:13px; font-weight:800; color:var(--text); white-space:nowrap; line-height:1;
+  }
+  .logo-version{
+    font-size:10px; font-weight:700; color:var(--accent); opacity:.8; margin-left:2px;
+  }
+  .pills-group{
+    display:flex; align-items:center; gap:5px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  .install-btn{
+    background:none; box-shadow:none; padding:2px 4px; min-height:0; font-size:16px; border-radius:6px;
+  }
+  .stats{ display:contents }
+  .pill{
+    padding:3px 7px; border-radius:999px; background:var(--card-2);
+    border:1px solid rgba(255,255,255,.08);
+    font-size:11px; font-weight:700; color:var(--muted);
+    white-space:nowrap;
+  }
+  .pill strong{ color:var(--text) }
+  .progress{height:5px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin:0 0 2px}
+  .bar{height:100%; width:0%; background: linear-gradient(90deg, var(--good), var(--accent)); transition: width .3s ease}
+  .speed-val{
+    color:var(--accent); font-size:12px; font-weight:800; margin-left:4px;
+  }
+  main{display:grid; grid-template-columns: 360px 1fr; gap:18px; padding:8px 16px 16px}
+  @media (max-width: 980px){ main{grid-template-columns:1fr; gap:10px; padding:8px 8px 12px} }
+  @media (max-width: 480px){ main{gap:8px; padding:6px 6px 10px} }
 
   .card{
     background: var(--card);
@@ -76,10 +102,10 @@ async function triggerInstall() {
     border-radius:16px; backdrop-filter: blur(8px);
     box-shadow: 0 8px 30px rgba(0,0,0,.35);
   }
-  .panel{padding:14px}
-  @media (max-width:480px){.panel{padding:10px}}
-  .controls{display:grid; gap:10px}
-  @media (max-width:480px){.controls{gap:8px}}
+  .panel{padding:10px}
+  @media (max-width:480px){.panel{padding:8px}}
+  .controls{display:grid; gap:7px}
+  @media (max-width:480px){.controls{gap:6px}}
   .row{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
   .row > *{flex:1; min-width:0}
   button{
@@ -89,10 +115,10 @@ async function triggerInstall() {
     font-size:clamp(13px, 3.5vw, 15px);
     box-shadow: 0 8px 18px rgba(110,231,255,.25);
     transition: transform .06s ease, box-shadow .2s ease, filter .2s ease;
-    white-space: nowrap; min-height: 48px; touch-action: manipulation;
+    white-space: nowrap; min-height: 42px; touch-action: manipulation;
   }
   @media (max-width:480px){
-    button{padding:10px 8px; border-radius:10px; min-height:52px;}
+    button{padding:8px 6px; border-radius:10px; min-height:42px;}
   }
   button:hover{transform: translateY(-1px)}
   button:active{transform: translateY(0) scale(.97)}
@@ -141,12 +167,12 @@ async function triggerInstall() {
     transform: translateY(-1px) scale(1.02);
   }
   .chip.current{outline:3px solid var(--accent); box-shadow:0 0 0 6px rgba(110,231,255,.2), 0 0 0 12px rgba(110,231,255,.12)}
-  .stats{display:flex; gap:8px; flex-wrap:wrap; padding:8px 12px; color:var(--muted); font-weight:700}
+  .stats{display:flex; gap:6px; flex-wrap:wrap; padding:6px 10px; color:var(--muted); font-weight:700}
   .stats .pill{
-    padding:6px 10px; border-radius:999px; background:var(--card-2); border:1px solid rgba(255,255,255,.08);
-    font-size:clamp(12px,3vw,14px);
+    padding:4px 8px; border-radius:999px; background:var(--card-2); border:1px solid rgba(255,255,255,.08);
+    font-size:clamp(11px,3vw,13px);
   }
-  .progress{height:8px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin:0 12px 12px}
+  .progress{height:6px; border-radius:999px; background:rgba(255,255,255,.08); overflow:hidden; margin:0 10px 8px}
   .bar{height:100%; width:0%; background: linear-gradient(90deg, var(--good), var(--accent)); transition: width .3s ease}
 
   /* Fullscreen number overlay */
@@ -200,13 +226,13 @@ async function triggerInstall() {
 
   /* ── Panneau paramètres redesigné ── */
   .settings-title{
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
-    color:var(--muted); padding: 4px 0 2px;
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.1em;
+    color:var(--muted); padding: 2px 0 0;
   }
 
   .setting-row{
     display:flex; flex-direction:column;
-    gap:8px; padding:10px 12px; border-radius:12px;
+    gap:6px; padding:8px 10px; border-radius:10px;
     background: var(--card-2); border:1px solid rgba(255,255,255,.06);
   }
   .setting-row.inline{flex-direction:row; align-items:center; justify-content:space-between}
@@ -228,8 +254,8 @@ async function triggerInstall() {
   /* Toggles : lignes compactes avec pill-button */
   .toggles-row{display:flex; flex-direction:column; gap:6px}
   .toggle-item{
-    display:flex; align-items:center; gap:10px;
-    padding:9px 12px; border-radius:12px;
+    display:flex; align-items:center; gap:8px;
+    padding:7px 10px; border-radius:10px;
     background: var(--card-2); border:1px solid rgba(255,255,255,.06);
   }
   .toggle-icon{font-size:17px; flex-shrink:0}
@@ -267,16 +293,17 @@ async function triggerInstall() {
   .toggle-switch[aria-pressed="true"] .t-off{ display:none }
   .toggle-switch[aria-pressed="true"] .t-on { display:inline }
 
-  /* Boutons d'action en bas */
+  /* Boutons d'action en bas — compacts, horizontaux */
   .action-row{
-    display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; margin-top:4px;
+    display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-top:2px;
   }
   .btn-action{
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:4px; padding:14px 8px; border-radius:14px; font-size:22px; min-height:70px;
+    display:flex; flex-direction:row; align-items:center; justify-content:center;
+    gap:5px; padding:9px 6px; border-radius:12px; font-size:17px; min-height:0;
   }
-  .btn-action span{font-size:12px; font-weight:800; letter-spacing:.02em}
-  @media(max-width:480px){.btn-action{min-height:64px; padding:12px 6px}}
+  .btn-action span{font-size:12px; font-weight:800; letter-spacing:.01em}
+  @media(max-width:480px){.btn-action{padding:8px 4px; font-size:16px}}
+  @media(max-width:480px){.btn-action span{font-size:11px}}
 
   footer{padding:8px 16px; color:var(--muted); font-size:11px; text-align:center}
   .kbd{padding:2px 6px; border-radius:6px; background: var(--card-2); border:1px solid rgba(255,255,255,.12)}
@@ -299,27 +326,24 @@ async function triggerInstall() {
 </head>
 <body>
 <div id="callBanner">📞 Appel en cours — Tirage mis en pause</div>
-<header>
-  <div class="logo">90</div>
-  <div>
-    <h1>Loto 1–90</h1>
-    <button id="installBtn" style="display:none" onclick="triggerInstall()">
-  📲 Installer
-</button>
-
-  </div>
-</header>
 
 <main>
   <!-- Panneau de contrôle -->
   <section class="card panel" aria-label="Panneau de contrôle des tirages">
     <div class="controls">
 
-      <!-- Statistiques + progression -->
-      <div class="stats" aria-live="polite">
-        <span class="pill">🎯 Tirés : <strong id="countDrawn">0</strong>/90</span>
-        <span class="pill">⏳ Restants : <strong id="countLeft">90</strong></span>
-        <span class="pill">🔔 Dernier : <strong id="lastNum">—</strong></span>
+      <!-- Header fusionné avec les stats -->
+      <div class="header-stats" aria-live="polite">
+        <div class="logo-group">
+          <div class="logo">90</div>
+          <div class="logo-title">Loto 1–90 <span class="logo-version">V4</span></div>
+        </div>
+        <div class="pills-group">
+          <span class="pill">🎯 Tirés <strong id="countDrawn">0</strong>/90</span>
+          <span class="pill">⏳ Restants <strong id="countLeft">90</strong></span>
+          <span class="pill">🔔 Dernier <strong id="lastNum">—</strong></span>
+        </div>
+        <button id="installBtn" style="display:none" onclick="triggerInstall()" class="install-btn">📲</button>
       </div>
       <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="90" aria-valuenow="0">
         <div class="bar" id="progressBar"></div>
@@ -328,25 +352,20 @@ async function triggerInstall() {
       <!-- Séparateur paramètres -->
       <div class="settings-title">⚙️ Paramètres</div>
 
-      <!-- Vitesse -->
-      <div class="setting-row">
+      <!-- Vitesse : tout en une ligne -->
+      <div class="setting-row inline">
         <div class="setting-info">
           <span class="setting-icon">⏱️</span>
-          <div>
-            <div class="setting-label">Vitesse automatique</div>
-            <div class="setting-desc" id="speedLabel">2 s entre chaque tirage</div>
-          </div>
+          <div class="setting-label">Vitesse <span id="speedLabel" class="speed-val">3s</span></div>
         </div>
-        <input id="speed" type="range" min="700" max="10000" step="100" value="2000" class="slider" />
+        <input id="speed" type="range" min="700" max="10000" step="100" value="3000" class="slider" />
       </div>
 
       <!-- Voix -->
       <div class="setting-row inline">
         <div class="setting-info">
           <span class="setting-icon">🗣️</span>
-          <div>
-            <div class="setting-label">Voix française</div>
-          </div>
+          <div class="setting-label">Voix</div>
         </div>
         <select id="voice" aria-label="Sélection de la voix française" class="setting-select"></select>
       </div>
@@ -395,9 +414,6 @@ async function triggerInstall() {
 
 <div class="confetti" id="confetti"></div>
 
-<footer>
-  Design playful & UX first — tout est sauvegardé en local. Astuce : clique une case pour entendre/voir son numéro à nouveau.
-</footer>
 
 <script>
 (() => {
@@ -650,7 +666,7 @@ async function triggerInstall() {
   function updateSpeedLabel(ms){
     const s = (ms/1000).toFixed(1).replace('.0','');
     const el = document.getElementById('speedLabel');
-    if(el) el.textContent = `${s} s entre chaque tirage`;
+    if(el) el.textContent = `${s}s`;
   }
 
   els.speed.addEventListener('input', e => {
